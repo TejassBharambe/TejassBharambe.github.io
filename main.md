@@ -1,7 +1,7 @@
 ::: center
 **Tejas Bharambe**\
 Pune, Maharashtra $|$ +91-9175784987 $|$ <bharambetejas1803@gmail.com>\
-[github.com/TejassBharambe](https://github.com/TejassBharambe) $|$
+[github.com/TejassBharambe](https://tejassbharambe.github.io/) $|$
 [linkedin.com/in/tejas18](https://www.linkedin.com/in/tejas18/)
 :::
 

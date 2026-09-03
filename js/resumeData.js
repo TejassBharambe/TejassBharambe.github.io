@@ -13,7 +13,7 @@ const RESUME_DATA = {
     linkedinHandle: "tejas18",
     tagline: "Building high-throughput, low-latency, event-driven streaming microservices and distributed voice AI architectures.",
     bio: "Backend Software Engineer at HSBC Technology India with production experience building real-time, event-driven microservices in Python. Built the PoC solo and scaled a greenfield voice AI platform at HSBC handling 1200+ concurrent audio streams with sub-second latency. Deep hands-on experience with FastAPI, WebSockets, async programming, Kafka, and event-driven real-time streaming architectures.",
-    resumeDownloadUrl: "main.md"
+    resumeDownloadUrl: "Tejas_Bharambe_Resume.pdf"
   },
   metrics: [
     { value: "1,200+", label: "Concurrent Audio Streams", note: "Sustained sub-second latency at HSBC" },

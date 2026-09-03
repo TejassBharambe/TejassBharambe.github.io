@@ -26,9 +26,7 @@ Live on **GitHub Pages**: Automatically deployed via GitHub Actions.
 ├── js/
 │   ├── resumeData.js            # Structured resume entity data extracted from main.md
 │   └── app.js                   # Interactive logic, Command Palette, filters, modals, copy tools
-├── .github/
-│   └── workflows/
-│       └── deploy.yml           # Automated GitHub Pages static deployment workflow
+├── Tejas_Bharambe_Resume.pdf    # PDF resume file served for download
 ├── main.md                      # Source resume markdown file
 └── README.md                    # Documentation
 ```
