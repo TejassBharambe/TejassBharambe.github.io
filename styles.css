@@ -223,21 +223,25 @@ body {
 
 /* Hero Section */
 .hero {
-  padding: 4.5rem 0 3.5rem;
+  padding: 4.5rem 0 3rem;
   position: relative;
 }
 
-.hero-layout {
+.hero-header-block {
+  margin-bottom: 1.5rem;
+}
+
+.hero-summary-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 3rem;
-  margin-bottom: 2.5rem;
+  gap: 2.75rem;
+  margin-bottom: 2rem;
 }
 
-.hero-text-content {
+.hero-bio-col {
   flex: 1;
-  max-width: 720px;
+  min-width: 0;
 }
 
 .hero-photo-wrapper {
@@ -250,10 +254,10 @@ body {
 
 .photo-glow {
   position: absolute;
-  inset: -15px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, rgba(168, 85, 247, 0.3) 50%, transparent 75%);
-  filter: blur(25px);
-  border-radius: 30px;
+  inset: -10px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, rgba(168, 85, 247, 0.25) 50%, transparent 75%);
+  filter: blur(18px);
+  border-radius: 50%;
   z-index: 0;
   animation: photoGlowPulse 4s infinite ease-in-out alternate;
 }
@@ -267,10 +271,10 @@ body {
   position: relative;
   z-index: 1;
   background: var(--bg-card);
-  border: 2px solid rgba(56, 189, 248, 0.3);
-  border-radius: 24px;
-  padding: 8px;
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(56, 189, 248, 0.35);
+  border-radius: 20px;
+  padding: 6px;
+  box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(12px);
   transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
@@ -279,34 +283,34 @@ body {
 }
 
 .photo-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(56, 189, 248, 0.6);
-  box-shadow: 0 25px 50px -10px rgba(56, 189, 248, 0.35);
+  transform: translateY(-3px);
+  border-color: rgba(56, 189, 248, 0.7);
+  box-shadow: 0 20px 40px -8px rgba(56, 189, 248, 0.35);
 }
 
 .profile-img {
-  width: 220px;
-  height: 220px;
+  width: 140px;
+  height: 140px;
   object-fit: cover;
-  object-position: center top;
-  border-radius: 18px;
+  object-position: center 15%;
+  border-radius: 16px;
   display: block;
 }
 
 .photo-badge {
   position: absolute;
-  bottom: -12px;
+  bottom: -10px;
   background: #0f131d;
   border: 1px solid rgba(52, 211, 153, 0.4);
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: var(--radius-full);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #34d399;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  gap: 0.35rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
   white-space: nowrap;
 }
 
@@ -1097,22 +1101,18 @@ body {
 }
 
 /* Responsive Rules */
-@media (max-width: 900px) {
-  .hero-layout {
+@media (max-width: 860px) {
+  .hero-summary-row {
     flex-direction: column-reverse;
     align-items: center;
     text-align: center;
-    gap: 2rem;
+    gap: 1.75rem;
   }
-  .hero-text-content {
-    max-width: 100%;
+  .hero-header-block {
+    text-align: center;
   }
   .hero-quick-actions {
     justify-content: center;
-  }
-  .profile-img {
-    width: 180px;
-    height: 180px;
   }
 }
 
@@ -1133,8 +1133,9 @@ body {
     grid-template-columns: 1fr;
   }
   .profile-img {
-    width: 150px;
-    height: 150px;
+    width: 120px;
+    height: 120px;
   }
 }
+
 
