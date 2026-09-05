@@ -1,100 +1,160 @@
-// app.js - High-impact portfolio interactions, dynamic rendering, command palette & metrics
+// app.js - Light-Theme "Live Playground" Engine, Interactive Sandboxes & Recruiter Filtering
 
 document.addEventListener('DOMContentLoaded', () => {
-  initHero();
-  initStatGrid();
-  initSkills();
+  initHeroAndStats();
+  initSkillsCloud();
   initExperience();
-  initProjects();
   initEducationAndLeadership();
   initCommandPalette();
   initScrollSpy();
   initToast();
+
+  // Initialize the 3 Interactive Sandbox Widgets
+  initVoiceAISandbox();
+  initFractalSandbox();
+  initRetinalSandbox();
 });
 
-// 1. Helper to auto-bold numbers & metrics in text strings
+// Helper: Auto-bold metric strings
 function highlightMetrics(text) {
-  // Replaces markdown **bold** with metric-highlight spans or strong
   return text.replace(/\*\*(.*?)\*\*/g, '<strong class="metric-highlight">$1</strong>');
 }
 
-// 2. Render Hero & Quick Actions
-function initHero() {
+// 1. Hero & Metrics
+function initHeroAndStats() {
   const p = RESUME_DATA.personal;
   document.getElementById('hero-name').innerText = p.name;
   document.getElementById('hero-role-title').innerText = `${p.role} — ${p.subRole}`;
   document.getElementById('hero-bio').innerHTML = highlightMetrics(p.bio);
-  
-  // Set direct links
+
   const ghLink = document.getElementById('github-cta');
   if (ghLink) ghLink.href = p.github;
-  
+
   const liLink = document.getElementById('linkedin-cta');
   if (liLink) liLink.href = p.linkedin;
 
   const resumeCta = document.getElementById('resume-download-btn');
-  if (resumeCta) {
-    resumeCta.href = p.resumeDownloadUrl;
+  if (resumeCta) resumeCta.href = p.resumeDownloadUrl;
+
+  // Render Stat Cards
+  const statsContainer = document.getElementById('stat-cards-container');
+  if (statsContainer) {
+    const badgeThemes = ['badge-sky', 'badge-emerald', 'badge-amber', 'badge-lavender'];
+    statsContainer.innerHTML = RESUME_DATA.metrics.map((m, idx) => `
+      <div class="stat-card">
+        <span class="stat-card-badge ${badgeThemes[idx % badgeThemes.length]}">${m.badge}</span>
+        <div class="stat-val">${m.value}</div>
+        <div class="stat-label">${m.label}</div>
+        <div class="stat-desc">${m.note}</div>
+      </div>
+    `).join('');
   }
 }
 
-// 3. Render Stat Grid
-function initStatGrid() {
-  const container = document.getElementById('stat-cards-container');
-  if (!container) return;
+// 2. Skills Cloud & Interactive Recruiter Filtering
+let activeSkillFilter = null;
 
-  container.innerHTML = RESUME_DATA.metrics.map(m => `
-    <div class="stat-card">
-      <div class="stat-val text-gradient">${m.value}</div>
-      <div class="stat-label">${m.label}</div>
-      <div class="stat-desc">${m.note}</div>
-    </div>
-  `).join('');
-}
-
-// 4. Render Skills Cloud with Filter Pills
-function initSkills() {
+function initSkillsCloud() {
   const filterWrap = document.getElementById('skills-filter-container');
   const gridWrap = document.getElementById('skills-grid-container');
   if (!gridWrap || !filterWrap) return;
 
-  // Render Category Filter Pills
   const categories = ["All", ...RESUME_DATA.skillsCategories.map(c => c.category)];
   filterWrap.innerHTML = categories.map((cat, idx) => `
     <button class="filter-pill ${idx === 0 ? 'active' : ''}" data-cat="${cat}">${cat}</button>
   `).join('');
 
-  // Render Skill Cards
-  function renderCards(filter = "All") {
-    const list = filter === "All" 
-      ? RESUME_DATA.skillsCategories 
-      : RESUME_DATA.skillsCategories.filter(c => c.category === filter);
+  function renderCategoryCards(selectedCat = "All") {
+    const list = selectedCat === "All"
+      ? RESUME_DATA.skillsCategories
+      : RESUME_DATA.skillsCategories.filter(c => c.category === selectedCat);
 
     gridWrap.innerHTML = list.map(c => `
       <div class="skill-category-card">
         <div class="skill-cat-title">
           <span>${c.category}</span>
-          <span class="cat-count">${c.skills.length} skills</span>
+          <span style="font-size:0.75rem; font-family:var(--font-mono); color:var(--text-muted);">${c.skills.length}</span>
         </div>
         <div class="badge-cloud">
-          ${c.skills.map(s => `<span class="skill-badge" data-skill="${s}">${s}</span>`).join('')}
+          ${c.skills.map(s => `
+            <span class="skill-badge ${c.colorClass} ${activeSkillFilter === s ? 'active-filter' : ''}" data-skill="${s}">${s}</span>
+          `).join('')}
         </div>
       </div>
     `).join('');
+
+    // Attach click listeners to individual skill badges to filter resume bullets & sandboxes
+    gridWrap.querySelectorAll('.skill-badge').forEach(badge => {
+      badge.addEventListener('click', () => {
+        toggleSkillFilter(badge.dataset.skill);
+      });
+    });
   }
 
-  renderCards();
+  renderCategoryCards();
 
   filterWrap.addEventListener('click', (e) => {
     if (e.target.classList.contains('filter-pill')) {
       filterWrap.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
-      renderCards(e.target.dataset.cat);
+      renderCategoryCards(e.target.dataset.cat);
     }
   });
 }
 
-// 5. Render Timeline & Expandable Architecture Deep-Dives
+// Filter resume experience and projects by skill
+function toggleSkillFilter(skillName) {
+  if (activeSkillFilter === skillName) {
+    activeSkillFilter = null;
+    showToast(`Filter cleared`);
+  } else {
+    activeSkillFilter = skillName;
+    showToast(`Filtering by "${skillName}"`);
+  }
+
+  // Update badge UI highlights
+  document.querySelectorAll('.skill-badge').forEach(b => {
+    b.classList.toggle('active-filter', b.dataset.skill === activeSkillFilter);
+  });
+
+  // Highlight/dim experience bullet points
+  const bullets = document.querySelectorAll('.experience-bullet');
+  bullets.forEach(item => {
+    if (!activeSkillFilter) {
+      item.classList.remove('highlighted-skill', 'dimmed');
+    } else {
+      const tags = (item.dataset.tags || '').split(',');
+      const matches = tags.some(t => t.trim().toLowerCase() === activeSkillFilter.toLowerCase());
+      if (matches) {
+        item.classList.add('highlighted-skill');
+        item.classList.remove('dimmed');
+      } else {
+        item.classList.remove('highlighted-skill');
+        item.classList.add('dimmed');
+      }
+    }
+  });
+
+  // Highlight/dim sandbox project cards
+  const cards = document.querySelectorAll('.sandbox-card');
+  cards.forEach(card => {
+    if (!activeSkillFilter) {
+      card.classList.remove('highlighted-project', 'dimmed');
+    } else {
+      const skills = (card.dataset.skills || '').split(',');
+      const matches = skills.some(s => s.trim().toLowerCase() === activeSkillFilter.toLowerCase());
+      if (matches) {
+        card.classList.add('highlighted-project');
+        card.classList.remove('dimmed');
+      } else {
+        card.classList.remove('highlighted-project');
+        card.classList.add('dimmed');
+      }
+    }
+  });
+}
+
+// 3. Render Experience Timeline
 function initExperience() {
   const container = document.getElementById('experience-timeline');
   if (!container) return;
@@ -111,135 +171,28 @@ function initExperience() {
           <span class="company-badge">${exp.company}</span> • <span>${exp.location}</span>
         </div>
         <ul class="bullet-list">
-          ${exp.highlights.map(h => `<li class="bullet-item">${highlightMetrics(h)}</li>`).join('')}
+          ${exp.highlights.map(h => `
+            <li class="bullet-item experience-bullet" data-tags="${h.tags.join(',')}">
+              ${highlightMetrics(h.text)}
+            </li>
+          `).join('')}
         </ul>
-
-        ${exp.deepDive ? `
-          <div class="deep-dive-box">
-            <button class="deep-dive-toggle" data-target="deepdive-${exp.id}">
-              <span>⚙️ Architectural Deep Dive: ${exp.deepDive.title}</span>
-              <span class="toggle-icon">▼</span>
-            </button>
-            <div class="deep-dive-body" id="deepdive-${exp.id}">
-              <div class="deep-dive-grid">
-                <div class="deep-dive-col">
-                  <h5>Challenge & Bottleneck</h5>
-                  <p>${exp.deepDive.challenge}</p>
-                </div>
-                <div class="deep-dive-col">
-                  <h5>Engineered Solution</h5>
-                  <p>${exp.deepDive.solution}</p>
-                </div>
-              </div>
-              <h5>Key Architectural Highlights</h5>
-              <ul class="bullet-list" style="margin-top: 0.5rem;">
-                ${exp.deepDive.architectureHighlights.map(h => `<li class="bullet-item">${h}</li>`).join('')}
-              </ul>
-              <div class="project-tags" style="margin-top: 0.75rem;">
-                ${exp.deepDive.tags.map(t => `<span class="tag-pill">${t}</span>`).join('')}
-              </div>
-            </div>
-          </div>
-        ` : ''}
-      </div>
-    </div>
-  `).join('');
-
-  // Toggle Deep-Dive
-  container.addEventListener('click', (e) => {
-    const btn = e.target.closest('.deep-dive-toggle');
-    if (!btn) return;
-    const targetId = btn.dataset.target;
-    const body = document.getElementById(targetId);
-    if (!body) return;
-    const isOpen = body.classList.contains('open');
-    body.classList.toggle('open', !isOpen);
-    btn.querySelector('.toggle-icon').textContent = isOpen ? '▼' : '▲';
-  });
-}
-
-// 6. Render Projects Grid & Details Modal
-function initProjects() {
-  const container = document.getElementById('projects-grid-container');
-  if (!container) return;
-
-  container.innerHTML = RESUME_DATA.projects.map(proj => `
-    <div class="project-card" id="proj-${proj.id}">
-      <div class="project-top">
-        <div class="project-badge-line">
-          <span class="project-domain">${proj.period}</span>
-          <span class="project-metric-pill">${proj.metrics}</span>
-        </div>
-        <h3 class="project-title">${proj.title}</h3>
-        <p class="project-desc">${proj.summary}</p>
-        <div class="project-tags">
-          ${proj.tags.map(t => `<span class="tag-pill">${t}</span>`).join('')}
-        </div>
-        <ul class="bullet-list">
-          ${proj.bullets.map(b => `<li class="bullet-item" style="font-size: 0.875rem;">${highlightMetrics(b)}</li>`).join('')}
-        </ul>
-      </div>
-      <div class="project-actions">
-        <a href="${proj.github}" target="_blank" rel="noopener noreferrer" class="btn btn-glass" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
-          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-          Source Code
-        </a>
-        <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="openProjectModal('${proj.id}')">
-          Architecture Deep-Dive
-        </button>
       </div>
     </div>
   `).join('');
 }
 
-// Open modal for project deep-dive
-window.openProjectModal = function(id) {
-  const proj = RESUME_DATA.projects.find(p => p.id === id);
-  if (!proj) return;
-
-  const modal = document.getElementById('project-modal');
-  const body = document.getElementById('project-modal-body');
-  if (!modal || !body) return;
-
-  body.innerHTML = `
-    <h3 style="font-size: 1.5rem; margin-bottom: 0.25rem;">${proj.title}</h3>
-    <p style="color: #38bdf8; font-size: 0.9rem; margin-bottom: 1.5rem;">${proj.subtitle}</p>
-    
-    <h5 style="text-transform: uppercase; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.4rem;">The Challenge</h5>
-    <p style="font-size: 0.95rem; color: #cbd5e1; margin-bottom: 1.25rem;">${proj.deepDive.problem}</p>
-
-    <h5 style="text-transform: uppercase; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.4rem;">Architectural Solution</h5>
-    <p style="font-size: 0.95rem; color: #cbd5e1; margin-bottom: 1.25rem;">${proj.deepDive.solution}</p>
-
-    <h5 style="text-transform: uppercase; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.4rem;">Engineering Outcomes</h5>
-    <ul class="bullet-list" style="margin-bottom: 1.5rem;">
-      ${proj.deepDive.results.map(r => `<li class="bullet-item">${r}</li>`).join('')}
-    </ul>
-
-    <a href="${proj.github}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-      Explore Repository on GitHub
-    </a>
-  `;
-
-  modal.classList.add('active');
-};
-
-window.closeProjectModal = function() {
-  const modal = document.getElementById('project-modal');
-  if (modal) modal.classList.remove('active');
-};
-
-// 7. Render Education and Leadership
+// 4. Render Education and Leadership
 function initEducationAndLeadership() {
   const eduContainer = document.getElementById('education-card');
   const leadContainer = document.getElementById('leadership-card');
-  
+
   if (eduContainer && RESUME_DATA.education[0]) {
     const e = RESUME_DATA.education[0];
     eduContainer.innerHTML = `
       <div class="card-title">${e.degree}</div>
       <div class="card-sub">${e.institution} • ${e.period}</div>
-      <div class="metric-highlight" style="display:inline-block; margin-bottom: 0.75rem;">${e.score}</div>
+      <div style="display:inline-block; font-family:var(--font-mono); font-weight:700; font-size:0.85rem; color:#0369a1; background:#f0f9ff; padding:2px 8px; border-radius:4px; margin-bottom:0.75rem;">${e.score}</div>
       <p class="card-detail">${e.details}</p>
     `;
   }
@@ -254,7 +207,308 @@ function initEducationAndLeadership() {
   }
 }
 
+// ============================================================================
+// 5. INTERACTIVE SANDBOX WIDGET 1: Voice AI Audio Noise-Buster & Stream Simulator
+// ============================================================================
+function initVoiceAISandbox() {
+  const canvas = document.getElementById('waveform-canvas');
+  const vadToggle = document.getElementById('vad-toggle');
+  const trafficSlider = document.getElementById('traffic-slider');
+  const trafficCountLabel = document.getElementById('traffic-count-label');
+  const accuracyLabel = document.getElementById('telemetry-accuracy');
+  const hallucinationsLabel = document.getElementById('telemetry-hallucinations');
+  const latencyLabel = document.getElementById('telemetry-latency');
+  const demoBtn = document.getElementById('voice-demo-btn');
+
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  let vadActive = true;
+  let streamCount = 1200;
+  let animationFrameId;
+  let phase = 0;
+  let demoActive = false;
+
+  function resizeCanvas() {
+    canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
+    canvas.height = 100 * window.devicePixelRatio;
+    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  function drawWaveform() {
+    const width = canvas.width / window.devicePixelRatio;
+    const height = 100;
+    ctx.clearRect(0, 0, width, height);
+
+    // Draw center baseline
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, height / 2);
+    ctx.lineTo(width, height / 2);
+    ctx.stroke();
+
+    // Waveform simulation
+    const points = 120;
+    const step = width / points;
+
+    ctx.beginPath();
+    ctx.lineWidth = 2.5;
+
+    for (let i = 0; i <= points; i++) {
+      const x = i * step;
+      // Synthesize audio chunk: alternating speech packets and silent/noise intervals
+      const isSpeechPacket = Math.sin(i * 0.15 + phase * 0.05) > -0.2;
+      let amp = 0;
+
+      if (isSpeechPacket) {
+        // Active human speech frequency burst
+        amp = Math.sin(i * 0.4 + phase * 0.2) * 28 + Math.sin(i * 0.8 + phase * 0.1) * 12;
+      } else {
+        // Dead air / background hold tones
+        if (vadActive) {
+          amp = 0; // VAD completely strips silent packet
+        } else {
+          // Unfiltered noise causing model hallucinations
+          amp = (Math.random() - 0.5) * 14 + Math.sin(i * 0.2 + phase * 0.05) * 8;
+        }
+      }
+
+      const y = height / 2 + amp;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+
+    // Color: Soft pastel sky blue for clean VAD speech; amber for unfiltered noise
+    ctx.strokeStyle = vadActive ? '#0284c7' : '#d97706';
+    ctx.stroke();
+
+    phase++;
+    animationFrameId = requestAnimationFrame(drawWaveform);
+  }
+
+  drawWaveform();
+
+  function updateTelemetry() {
+    if (vadActive) {
+      accuracyLabel.innerText = "92.0%";
+      accuracyLabel.style.color = "#059669";
+      hallucinationsLabel.innerText = "-95% (Stripped)";
+      hallucinationsLabel.style.color = "#059669";
+    } else {
+      accuracyLabel.innerText = "45.0%";
+      accuracyLabel.style.color = "#dc2626";
+      hallucinationsLabel.innerText = "High (+95% Noise)";
+      hallucinationsLabel.style.color = "#d97706";
+    }
+
+    // Benchmark sub-second latency and RTF ~0.3 based on traffic
+    const baseLatency = 210; // ms
+    const jitter = Math.floor((streamCount / 1200) * 120);
+    latencyLabel.innerText = `${baseLatency + jitter}ms (RTF 0.3x)`;
+  }
+
+  if (vadToggle) {
+    vadToggle.addEventListener('change', (e) => {
+      vadActive = e.target.checked;
+      updateTelemetry();
+      showToast(vadActive ? 'WebRTC VAD Filter Active: Silent packets eliminated' : 'VAD Filter Disabled: Background noise leaking to model');
+    });
+  }
+
+  if (trafficSlider) {
+    trafficSlider.addEventListener('input', (e) => {
+      streamCount = parseInt(e.target.value, 10);
+      trafficCountLabel.innerText = `${streamCount.toLocaleString()}+ streams`;
+      updateTelemetry();
+    });
+  }
+
+  if (demoBtn) {
+    demoBtn.addEventListener('click', () => {
+      if (demoActive) return;
+      demoActive = true;
+      demoBtn.disabled = true;
+      demoBtn.innerHTML = `<span>⏳ Simulating Live Audio Session...</span>`;
+      
+      vadToggle.checked = false;
+      vadActive = false;
+      updateTelemetry();
+
+      setTimeout(() => {
+        vadToggle.checked = true;
+        vadActive = true;
+        updateTelemetry();
+        showToast('WebRTC VAD auto-engaged: Filtered 8.4s dead air in sub-second pass');
+      }, 2500);
+
+      setTimeout(() => {
+        demoActive = false;
+        demoBtn.disabled = false;
+        demoBtn.innerHTML = `<span>▶ Run 5s Voice Stream Session</span>`;
+      }, 5000);
+    });
+  }
+
+  updateTelemetry();
+}
+
+// ============================================================================
+// 6. INTERACTIVE SANDBOX WIDGET 2: Fractal Compression CPU Multiplier
+// ============================================================================
+function initFractalSandbox() {
+  const core1Btn = document.getElementById('core-btn-1');
+  const coreAllBtn = document.getElementById('core-btn-all');
+  const timerDisplay = document.getElementById('fractal-timer-display');
+  const speedupBadge = document.getElementById('fractal-speedup-badge');
+  const runBtn = document.getElementById('fractal-run-btn');
+  const coreCells = document.querySelectorAll('.core-cell');
+
+  if (!core1Btn || !coreAllBtn) return;
+
+  let mode = 'all'; // '1' or 'all'
+  let isRunning = false;
+
+  function setMode(newMode) {
+    mode = newMode;
+    if (mode === '1') {
+      core1Btn.classList.add('active');
+      core1Btn.style.background = '#0284c7';
+      core1Btn.style.color = '#ffffff';
+
+      coreAllBtn.classList.remove('active');
+      coreAllBtn.style.background = '#ffffff';
+      coreAllBtn.style.color = '#334155';
+
+      coreCells.forEach((cell, idx) => {
+        cell.classList.toggle('active', idx === 0);
+      });
+
+      timerDisplay.innerText = "10.4s";
+      speedupBadge.innerText = "Baseline (1x)";
+      speedupBadge.className = "pastel-pill badge-amber";
+    } else {
+      coreAllBtn.classList.add('active');
+      coreAllBtn.style.background = '#0284c7';
+      coreAllBtn.style.color = '#ffffff';
+
+      core1Btn.classList.remove('active');
+      core1Btn.style.background = '#ffffff';
+      core1Btn.style.color = '#334155';
+
+      coreCells.forEach(cell => cell.classList.add('active'));
+
+      timerDisplay.innerText = "5.2s";
+      speedupBadge.innerText = "50% Faster (2x)";
+      speedupBadge.className = "pastel-pill badge-emerald";
+    }
+  }
+
+  core1Btn.addEventListener('click', () => setMode('1'));
+  coreAllBtn.addEventListener('click', () => setMode('all'));
+
+  if (runBtn) {
+    runBtn.addEventListener('click', () => {
+      if (isRunning) return;
+      isRunning = true;
+      runBtn.disabled = true;
+
+      const fills = document.querySelectorAll('.core-progress-fill');
+      fills.forEach(f => f.style.width = '0%');
+
+      let duration = mode === '1' ? 3000 : 1500;
+      let start = performance.now();
+
+      function step(now) {
+        let elapsed = now - start;
+        let progress = Math.min(100, (elapsed / duration) * 100);
+
+        if (mode === '1') {
+          if (fills[0]) fills[0].style.width = `${progress}%`;
+        } else {
+          fills.forEach((f, idx) => {
+            let offset = (idx * 5);
+            f.style.width = `${Math.min(100, Math.max(0, progress + offset))}%`;
+          });
+        }
+
+        if (progress < 100) {
+          requestAnimationFrame(step);
+        } else {
+          isRunning = false;
+          runBtn.disabled = false;
+          showToast(`Compression finished in ${mode === '1' ? '10.4s (Single Core)' : '5.2s (Multiprocessing across all cores)'}`);
+        }
+      }
+
+      requestAnimationFrame(step);
+    });
+  }
+
+  setMode('all');
+}
+
+// ============================================================================
+// 7. INTERACTIVE SANDBOX WIDGET 3: Neural Retinal Scanner & Classifier
+// ============================================================================
+function initRetinalSandbox() {
+  const scanTriggerBtn = document.getElementById('retinal-scan-trigger');
+  const laser = document.getElementById('scanner-laser');
+  const diagNormal = document.getElementById('diag-normal-val');
+  const diagRetinopathy = document.getElementById('diag-retinopathy-val');
+  const diagNormalFill = document.getElementById('diag-normal-fill');
+  const diagRetinopathyFill = document.getElementById('diag-retinopathy-fill');
+  const confusionToggleBtn = document.getElementById('confusion-matrix-toggle');
+  const confusionBox = document.getElementById('confusion-matrix-box');
+
+  if (!scanTriggerBtn) return;
+
+  let scanning = false;
+
+  scanTriggerBtn.addEventListener('click', () => {
+    if (scanning) return;
+    scanning = true;
+    scanTriggerBtn.disabled = true;
+    laser.classList.add('scanning');
+
+    // Reset bars
+    diagNormalFill.style.width = '0%';
+    diagRetinopathyFill.style.width = '0%';
+    diagNormal.innerText = 'Analyzing...';
+    diagRetinopathy.innerText = 'Analyzing...';
+
+    setTimeout(() => {
+      laser.classList.remove('scanning');
+      scanning = false;
+      scanTriggerBtn.disabled = false;
+
+      // Render model predictions
+      diagNormalFill.style.width = '2.1%';
+      diagNormalFill.style.background = '#94a3b8';
+      diagNormal.innerText = '2.1%';
+
+      diagRetinopathyFill.style.width = '95.9%';
+      diagRetinopathyFill.style.background = '#059669';
+      diagRetinopathy.innerText = '95.9% (Detected)';
+
+      showToast('ResNet forward pass completed: 95.9% diagnostic confidence (+31.9% vs baseline)');
+    }, 2000);
+  });
+
+  if (confusionToggleBtn && confusionBox) {
+    confusionToggleBtn.addEventListener('click', () => {
+      const isOpen = confusionBox.style.display === 'block';
+      confusionBox.style.display = isOpen ? 'none' : 'block';
+      confusionToggleBtn.innerText = isOpen ? 'Show Confusion Matrix' : 'Hide Confusion Matrix';
+    });
+  }
+}
+
+// ============================================================================
 // 8. Command Palette (Cmd+K / Ctrl+K & Search)
+// ============================================================================
 function initCommandPalette() {
   const modal = document.getElementById('cmd-palette-modal');
   const input = document.getElementById('cmd-input');
@@ -263,7 +517,6 @@ function initCommandPalette() {
 
   if (!modal || !input || !resultsList) return;
 
-  // Build searchable index
   const index = [];
 
   // Skills
@@ -271,23 +524,21 @@ function initCommandPalette() {
     c.skills.forEach(s => {
       index.push({
         title: s,
-        category: `Skill (${c.category})`,
+        category: `Skill • ${c.category}`,
         action: () => {
-          highlightSkillBadge(s);
-          scrollToSection('skills');
+          toggleSkillFilter(s);
+          scrollToSection('experience');
         }
       });
     });
   });
 
-  // Projects
+  // Projects & Sandboxes
   RESUME_DATA.projects.forEach(p => {
     index.push({
       title: p.title,
-      category: 'Project',
-      action: () => {
-        scrollToSection(`proj-${p.id}`);
-      }
+      category: 'Interactive Sandbox',
+      action: () => scrollToSection(`project-${p.id}`)
     });
   });
 
@@ -296,37 +547,40 @@ function initCommandPalette() {
     index.push({
       title: `${e.role} @ ${e.company}`,
       category: 'Experience',
-      action: () => {
-        scrollToSection('experience');
-      }
+      action: () => scrollToSection('experience')
     });
   });
 
-  // Actions
+  // Quick actions
   index.push({
-    title: 'Copy Email Address',
+    title: 'Copy Email (bharambetejas1803@gmail.com)',
     category: 'Action',
-    action: () => copyToClipboard(RESUME_DATA.personal.email, 'Email address copied!')
+    action: () => copyToClipboard(RESUME_DATA.personal.email, 'Email copied!')
   });
   index.push({
-    title: 'Copy Phone Number',
+    title: 'Copy Phone (+91-9175784987)',
     category: 'Action',
-    action: () => copyToClipboard(RESUME_DATA.personal.phone, 'Phone number copied!')
+    action: () => copyToClipboard(RESUME_DATA.personal.phone, 'Phone copied!')
   });
   index.push({
-    title: 'View GitHub Profile',
-    category: 'External Link',
-    action: () => window.open(RESUME_DATA.personal.github, '_blank')
+    title: 'Download Resume PDF',
+    category: 'Action',
+    action: () => {
+      const link = document.createElement('a');
+      link.href = RESUME_DATA.personal.resumeDownloadUrl;
+      link.download = 'Tejas_Bharambe_Resume.pdf';
+      link.click();
+    }
   });
 
   function renderResults(query = '') {
     const q = query.toLowerCase().trim();
-    const matches = q === '' 
-      ? index.slice(0, 7) 
+    const matches = q === ''
+      ? index.slice(0, 8)
       : index.filter(item => item.title.toLowerCase().includes(q) || item.category.toLowerCase().includes(q));
 
     if (matches.length === 0) {
-      resultsList.innerHTML = `<li style="padding: 1.5rem; text-align: center; color: #64748b;">No matching skills, projects, or actions found.</li>`;
+      resultsList.innerHTML = `<li style="padding:1.5rem; text-align:center; color:#64748b; font-size:0.9rem;">No matching skills, projects, or actions.</li>`;
       return;
     }
 
@@ -361,16 +615,10 @@ function initCommandPalette() {
   window.addEventListener('keydown', (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
-      if (modal.classList.contains('active')) {
-        closePalette();
-      } else {
-        openPalette();
-      }
+      if (modal.classList.contains('active')) closePalette();
+      else openPalette();
     }
-    if (e.key === 'Escape') {
-      closePalette();
-      closeProjectModal();
-    }
+    if (e.key === 'Escape') closePalette();
   });
 
   input.addEventListener('input', (e) => renderResults(e.target.value));
@@ -380,29 +628,17 @@ function initCommandPalette() {
   });
 }
 
-// 9. Interactive Skill Badge Highlighting
-function highlightSkillBadge(skillName) {
-  document.querySelectorAll('.skill-badge').forEach(b => {
-    if (b.dataset.skill.toLowerCase() === skillName.toLowerCase()) {
-      b.classList.add('highlighted');
-      setTimeout(() => b.classList.remove('highlighted'), 3000);
-    }
-  });
-}
-
 function scrollToSection(id) {
   const el = document.getElementById(id);
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// 10. Copy-to-Clipboard & Toast
+// 9. Clipboard & Toast Feedback
 window.copyToClipboard = function(text, successMsg = 'Copied to clipboard!') {
   navigator.clipboard.writeText(text).then(() => {
     showToast(successMsg);
   }).catch(err => {
-    console.error('Copy failed: ', err);
+    console.error('Copy failed:', err);
   });
 };
 
@@ -421,10 +657,10 @@ function showToast(msg) {
     <span>${msg}</span>
   `;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2500);
+  setTimeout(() => toast.classList.remove('show'), 2600);
 }
 
-// 11. ScrollSpy for Navbar
+// 10. ScrollSpy for Navbar
 function initScrollSpy() {
   const sections = document.querySelectorAll('section[id]');
   const navLinks = document.querySelectorAll('.nav-link');
@@ -432,7 +668,7 @@ function initScrollSpy() {
   window.addEventListener('scroll', () => {
     let current = '';
     sections.forEach(section => {
-      const sectionTop = section.offsetTop - 120;
+      const sectionTop = section.offsetTop - 110;
       if (window.pageYOffset >= sectionTop) {
         current = section.getAttribute('id');
       }

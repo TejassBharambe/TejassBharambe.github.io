@@ -1,19 +1,43 @@
-# Tejas Bharambe — Interactive Developer Portfolio
+# Tejas Bharambe — Light-Theme "Live Playground" Portfolio
 
-A modern, high-contrast, sub-second latency interactive developer portfolio tailored specifically for technical recruiters and hiring managers. Built with pure semantic HTML5, modern CSS3 (Custom Properties & Glassmorphism), and vanilla ES6+ JavaScript.
+An aesthetic, sophisticated light-mode developer portfolio featuring client-side **"Live Playground" Sandboxes** designed to convert complex backend, voice AI, and systems engineering concepts into intuitive, interactive widgets for technical recruiters and hiring managers.
 
-Live on **GitHub Pages**: Automatically deployed via GitHub Actions.
+Live on **GitHub Pages**: [https://tejassbharambe.github.io/](https://tejassbharambe.github.io/)
 
 ---
 
-## 🚀 Key Highlights & Architectural Features
+## 🎨 Aesthetic & Design System
 
-- **Production Impact Metrics Front-and-Center:** Highlights key achievements ($5M+/year potential savings at HSBC, 1,200+ concurrent audio streams, 92% ASR transcription accuracy via WebRTC VAD, RTF ~0.3).
-- **Interactive Command Palette (`Cmd+K` / `Ctrl+K`):** Keyboard-driven instant search over technical skills, project architectures, work experience, and quick actions (copy email/phone).
-- **Categorized Tech Stack Badges:** Filterable cloud across Languages, Backend & Streaming, Cloud/Infra, Core CS, and Tools with active highlight feedback.
-- **Architectural Deep-Dive Drawers:** Expandable system design breakdowns for real-time WebSockets/Kafka microservices, CPU-parallelized fractal compression, and ResNet medical classifiers.
-- **One-Click Recruiter Actions:** Click-to-copy buttons for email and phone with toast feedback, direct GitHub/LinkedIn profiles, and one-click resume download.
-- **SEO & ATS Optimizations:** Complete Open Graph, Twitter Cards, and structured `JSON-LD` (`schema.org/Person`) metadata.
+- **Warm Light-Mode Palette:** Warm off-white foundation (`#faf9f6`), pure white cards (`#ffffff`), soft border outlines, and ambient pastel glow meshes.
+- **Pastel Accents:** Sage Emerald (`#a7f3d0`), Soft Sky Blue (`#bae6fd`), Gentle Lavender (`#ddd6fe`), and Warm Amber (`#fde68a`).
+- **Typography:** `Plus Jakarta Sans` for clean headings and body, paired with `JetBrains Mono` for code badges, telemetry stats, and numbers.
+- **Compact Avatar Placement:** Profile photo positioned alongside the initial summary in the Hero section.
+
+---
+
+## ⚡ Interactive Live Sandbox Widgets (100% Client-Side)
+
+### 1. The Audio Noise-Buster & Stream Simulator (HSBC Greenfield Voice AI)
+- **Interactive Dual-Waveform Canvas:** Real-time 60 FPS HTML5 Canvas rendering speech bursts vs silence/noise packets.
+- **WebRTC VAD Switch:** Toggling VAD strips background noise, updating metrics in real-time (`ASR Accuracy: 45% -> 92%` and `Hallucinations: -95%`).
+- **Traffic Load Slider:** Dynamically simulates 100 to 1,200+ concurrent streams, benchmarking sub-second latency and an RTF of **~0.3x (3x faster than real-time)**.
+- **Simulated Voice Session:** Auto-runs a 5-second simulated call session.
+
+### 2. The CPU Core Multiplier (Parallel Fractal Image Compression)
+- **Core Dispatcher Grid:** Interactive core grid showing animated worker thread distributions.
+- **Core Count Mode:** Toggles between 1 Core (Serial - 10.4s) and All Cores (Parallel Multiprocessing - 5.2s, **50% faster**).
+- **Live Benchmark Dispatcher:** Simulates chunk task distribution across CPU cores with animated progress tracks.
+
+### 3. The Neural Scanner (PyTorch Retinal Disease Classification)
+- **Fundus Scanner Visualizer:** Simulated laser scan sweep over an ocular fundus medical visualization.
+- **Forward-Pass Diagnostics:** Renders model classification probabilities (**95.9% Diabetic Retinopathy Detection**, +31.9% gain over baseline).
+- **Confusion Matrix Drawer:** Expandable matrix displaying true/false positive and negative benchmarks.
+
+---
+
+## 🔍 Recruiter Skill Highlighting (`Cmd + K` & Badge Filter)
+
+- Clicking any pastel skill badge or using `Cmd + K` automatically highlights matching experience achievements at HSBC while dimming unrelated bullets.
 
 ---
 
@@ -21,38 +45,24 @@ Live on **GitHub Pages**: Automatically deployed via GitHub Actions.
 
 ```text
 .
-├── index.html                   # Semantic markup, SEO metadata, JSON-LD structured data
-├── styles.css                   # Modern dark-mode palette, glassmorphism, responsive styles
+├── index.html                   # Light-theme layout with 3 interactive dual-pane sandboxes
+├── styles.css                   # Warm pastel palette, glassmorphism, responsive grid
 ├── js/
-│   ├── resumeData.js            # Structured resume entity data extracted from main.md
-│   └── app.js                   # Interactive logic, Command Palette, filters, modals, copy tools
-├── Tejas_Bharambe_Resume.pdf    # PDF resume file served for download
-├── main.md                      # Source resume markdown file
-└── README.md                    # Documentation
+│   ├── resumeData.js            # Structured resume entity data, skill tags, metrics
+│   └── app.js                   # Interactive sandbox engines, canvas loops, Cmd+K filter
+├── Tejas_Bharambe_Resume.pdf    # Downloadable PDF resume
+├── resume pic new.png           # Profile avatar
+└── README.md                    # Project documentation
 ```
 
 ---
 
-## 🔄 Updating Resume Content
+## 🚀 Deploying / Updating on GitHub Pages
 
-If you update your resume:
-1. Update `main.md` with any new achievements or roles.
-2. Update the structured entities in [`js/resumeData.js`](file:///d:/VsCode/Profile_github_Page/js/resumeData.js) (metrics, experience bullets, deep dives, skills). The portfolio automatically renders changes from this file!
-
----
-
-## 🌐 Deploying to GitHub Pages
-
-1. Push this repository to GitHub:
+1. Stage and commit changes:
    ```bash
-   git init
    git add .
-   git commit -m "Initial portfolio commit"
-   git branch -M main
-   git remote add origin https://github.com/TejassBharambe/<repo-name>.git
+   git commit -m "Build aesthetic light-theme Live Playground portfolio with interactive sandboxes"
    git push -u origin main
    ```
-2. In your GitHub repository:
-   - Go to **Settings** > **Pages**.
-   - Under **Build and deployment**, set **Source** to **GitHub Actions**.
-3. Every push to the `main` branch will automatically trigger `.github/workflows/deploy.yml` and publish your site!
+2. Your GitHub Pages site at `https://tejassbharambe.github.io/` will be updated with sub-second load times.
