@@ -230,15 +230,18 @@ function initVoiceAISandbox() {
   let demoActive = false;
 
   function resizeCanvas() {
-    canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
-    canvas.height = 100 * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = (canvas.parentElement.clientWidth || 400) * dpr;
+    canvas.height = 100 * dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // reset before scaling
+    ctx.scale(dpr, dpr);
   }
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
 
   function drawWaveform() {
-    const width = canvas.width / window.devicePixelRatio;
+    const dpr = window.devicePixelRatio || 1;
+    const width = canvas.width / dpr;
     const height = 100;
     ctx.clearRect(0, 0, width, height);
 
@@ -331,23 +334,26 @@ function initVoiceAISandbox() {
       if (demoActive) return;
       demoActive = true;
       demoBtn.disabled = true;
-      demoBtn.innerHTML = `<span>⏳ Simulating Live Audio Session...</span>`;
-      
-      vadToggle.checked = false;
+      demoBtn.textContent = '⏳ Simulating Live Audio Session...';
+
+      // Step 1: disable VAD to show noisy state
+      if (vadToggle) vadToggle.checked = false;
       vadActive = false;
       updateTelemetry();
 
+      // Step 2: re-enable VAD after 2.5s
       setTimeout(() => {
-        vadToggle.checked = true;
+        if (vadToggle) vadToggle.checked = true;
         vadActive = true;
         updateTelemetry();
         showToast('WebRTC VAD auto-engaged: Filtered 8.4s dead air in sub-second pass');
       }, 2500);
 
+      // Step 3: reset button after 5s
       setTimeout(() => {
         demoActive = false;
         demoBtn.disabled = false;
-        demoBtn.innerHTML = `<span>▶ Run 5s Voice Stream Session</span>`;
+        demoBtn.textContent = '▶ Run 5s Voice Stream Session';
       }, 5000);
     });
   }
@@ -366,7 +372,7 @@ function initFractalSandbox() {
   const runBtn = document.getElementById('fractal-run-btn');
   const coreCells = document.querySelectorAll('.core-cell');
 
-  if (!core1Btn || !coreAllBtn) return;
+  if (!core1Btn || !coreAllBtn || !timerDisplay || !speedupBadge) return;
 
   let mode = 'all'; // '1' or 'all'
   let isRunning = false;
@@ -463,7 +469,7 @@ function initRetinalSandbox() {
   const confusionToggleBtn = document.getElementById('confusion-matrix-toggle');
   const confusionBox = document.getElementById('confusion-matrix-box');
 
-  if (!scanTriggerBtn) return;
+  if (!scanTriggerBtn || !laser || !diagNormal || !diagRetinopathy || !diagNormalFill || !diagRetinopathyFill) return;
 
   let scanning = false;
 
@@ -476,8 +482,8 @@ function initRetinalSandbox() {
     // Reset bars
     diagNormalFill.style.width = '0%';
     diagRetinopathyFill.style.width = '0%';
-    diagNormal.innerText = 'Analyzing...';
-    diagRetinopathy.innerText = 'Analyzing...';
+    diagNormal.textContent = 'Analyzing...';
+    diagRetinopathy.textContent = 'Analyzing...';
 
     setTimeout(() => {
       laser.classList.remove('scanning');
@@ -487,11 +493,11 @@ function initRetinalSandbox() {
       // Render model predictions
       diagNormalFill.style.width = '2.1%';
       diagNormalFill.style.background = '#94a3b8';
-      diagNormal.innerText = '2.1%';
+      diagNormal.textContent = '2.1%';
 
       diagRetinopathyFill.style.width = '95.9%';
       diagRetinopathyFill.style.background = '#059669';
-      diagRetinopathy.innerText = '95.9% (Detected)';
+      diagRetinopathy.textContent = '95.9% (Detected)';
 
       showToast('ResNet forward pass completed: 95.9% diagnostic confidence (+31.9% vs baseline)');
     }, 2000);
@@ -501,7 +507,7 @@ function initRetinalSandbox() {
     confusionToggleBtn.addEventListener('click', () => {
       const isOpen = confusionBox.style.display === 'block';
       confusionBox.style.display = isOpen ? 'none' : 'block';
-      confusionToggleBtn.innerText = isOpen ? 'Show Confusion Matrix' : 'Hide Confusion Matrix';
+      confusionToggleBtn.textContent = isOpen ? 'Show Confusion Matrix' : 'Hide Confusion Matrix';
     });
   }
 }
